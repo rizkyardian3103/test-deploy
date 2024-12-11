@@ -1,25 +1,30 @@
+# Menggunakan image resmi PHP dengan Apache
 FROM php:8.2-apache
 
-WORKDIR /var/www/html
+# Set servername melalui environment variable
+ARG SERVER_NAME=localhost
 
-RUN apt-get update && apt-get install -y \
-    libzip-dev zip unzip git curl \
-    && docker-php-ext-install pdo pdo_mysql zip \
-    && a2enmod rewrite \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+# Install ekstensi PHP jika diperlukan (misalnya mysqli, pdo_mysql)
+RUN docker-php-ext-install mysqli pdo pdo_mysql
 
-RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
+# Aktifkan module Apache rewrite (opsional jika dibutuhkan)
+RUN a2enmod rewrite
 
-COPY composer.json composer.lock /var/www/html/
-RUN composer install --no-dev --optimize-autoloader
+# Konfigurasi servername di Apache
+RUN echo "ServerName ${SERVER_NAME}" >> /etc/apache2/apache2.conf
 
+# Salin file aplikasi ke dalam container (pastikan aplikasi ada di folder yang sama dengan Dockerfile)
 COPY . /var/www/html
 
+# Set folder kerja
+WORKDIR /var/www/html
+
+# Set permission untuk folder aplikasi
 RUN chown -R www-data:www-data /var/www/html \
-    && find /var/www/html -type d -exec chmod 755 {} \; \
-    && find /var/www/html -type f -exec chmod 644 {} \;
+    && chmod -R 755 /var/www/html
 
-EXPOSE 9000
+# Expose port 80 untuk Apache
+EXPOSE 80
 
+# Jalankan Apache
 CMD ["apache2-foreground"]
