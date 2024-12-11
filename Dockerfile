@@ -17,4 +17,4 @@ RUN chown -R www-data:www-data /var/www/html
 RUN a2enmod rewrite
 
 # Tentukan port untuk aplikasi
-EXPOSE 9000
+EXPOSE 80
