@@ -4,25 +4,28 @@ FROM php:8.2-apache
 # Set working directory di dalam container
 WORKDIR /var/www/html
 
-# Install ekstensi PHP yang diperlukan (tambahkan sesuai kebutuhan project Anda)
+# Install ekstensi PHP yang diperlukan
 RUN apt-get update && apt-get install -y \
     libzip-dev zip unzip git curl \
     && docker-php-ext-install pdo pdo_mysql zip \
     && a2enmod rewrite \
-    && apt-get clean
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Salin file composer ke container (jika menggunakan Composer)
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+# Set ServerName untuk mencegah error
+RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
 
-# Salin semua file project ke dalam container
+# Copy composer terlebih dahulu untuk caching
+COPY composer.json composer.lock /var/www/html/
+RUN composer install --no-dev --optimize-autoloader
+
+# Copy seluruh file project
 COPY . /var/www/html
 
-# Set permission agar file memiliki hak akses yang sesuai
+# Set file permission
 RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 /var/www/html
-
-# Jalankan perintah Composer jika file composer.json ada
-RUN if [ -f "composer.json" ]; then composer install --no-dev --optimize-autoloader; fi
+    && find /var/www/html -type d -exec chmod 755 {} \; \
+    && find /var/www/html -type f -exec chmod 644 {} \;
 
 # Expose port 80 untuk aplikasi web
 EXPOSE 80
