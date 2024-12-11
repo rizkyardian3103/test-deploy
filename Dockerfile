@@ -4,6 +4,9 @@ FROM php:8.1-apache
 # Install ekstensi yang diperlukan, misalnya mysqli untuk MySQL
 RUN docker-php-ext-install mysqli pdo pdo_mysql
 
+# Tambahkan ServerName ke konfigurasi Apache
+RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
+
 # Salin semua file proyek ke /var/www/html
 COPY . /var/www/html
 
